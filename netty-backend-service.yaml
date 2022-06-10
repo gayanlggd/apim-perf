@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netty-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: netty-backend
+  template:
+    metadata:
+      labels:
+        app: netty-backend
+    spec:
+      containers:
+        - name: netty-backend
+          env:
+            - name: JAVA_OPTS
+              value: "-Xms4g -Xmx4g"
+          image: vajiraprabuddhaka/netty-http-echo-service:latest
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: "4Gi"
+              cpu: "4000m"
+            limits:
+              memory: "6Gi"
+              cpu: "4000m"
+          ports:
+            - containerPort: 8688
+          livenessProbe:
+            tcpSocket:
+              port: 8688
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            tcpSocket:
+              port: 8688
+            initialDelaySeconds: 8
+            periodSeconds: 5
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: netty-backend
+  name: netty-backend-service
+spec:
+  type: ClusterIP
+  selector:
+    app: netty-backend
+  ports:
+    - name: "netty-backend"
+      port: 8688
+      targetPort: 8688
+      protocol: TCP
